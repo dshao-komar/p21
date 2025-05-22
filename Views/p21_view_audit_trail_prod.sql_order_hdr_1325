@@ -1,0 +1,85 @@
+USE [P21]
+GO
+
+/****** Object:  View [dbo].[p21_view_audit_trail_prod_order_hdr_1325]    Script Date: 5/22/2025 10:39:16 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER OFF
+GO
+
+
+CREATE VIEW [dbo].[p21_view_audit_trail_prod_order_hdr_1325] 
+AS
+  SELECT audit_trail.audit_trail_uid,   
+         audit_trail.source_area_cd,   
+         audit_trail.table_changed, 
+         audit_trail.column_changed,   
+         audit_trail.column_description,   
+         audit_trail.key1_cd,   
+         audit_trail.key1_value,   
+         audit_trail.key2_cd,   
+         audit_trail.key2_value,   
+         audit_trail.key3_cd,   
+         audit_trail.key3_value,   
+         audit_trail.line_no,   
+         audit_trail.inv_mast_uid, 
+--DT 1047097
+		CASE audit_trail.old_value 
+			WHEN '[added]' THEN audit_trail.old_value 
+			WHEN '[deleted]' THEN audit_trail.old_value 
+			ELSE 
+				CASE audit_trail.column_changed 
+						WHEN 'expected_completion_date' THEN dbo.p21_fn_datepart(CONVERT(datetime, audit_trail.old_value, 101))
+						WHEN 'order_date' THEN dbo.p21_fn_datepart(CONVERT(datetime, audit_trail.old_value, 101))
+						WHEN 'required_date' THEN dbo.p21_fn_datepart(CONVERT(datetime, audit_trail.old_value, 101))
+						WHEN 'expedite_date' THEN dbo.p21_fn_datepart(CONVERT(datetime, audit_trail.old_value, 101))
+						ELSE audit_trail.old_value 
+				END
+		END as old_value,  
+--         audit_trail.old_value,  
+--DT 1047097
+		CASE audit_trail.new_value 
+			WHEN '[added]' THEN audit_trail.new_value 
+			WHEN '[deleted]' THEN audit_trail.new_value 
+			ELSE 
+				CASE audit_trail.column_changed 
+						WHEN 'expected_completion_date' THEN dbo.p21_fn_datepart(CONVERT(datetime, audit_trail.new_value, 101))
+						WHEN 'order_date' THEN dbo.p21_fn_datepart(CONVERT(datetime, audit_trail.new_value, 101))
+						WHEN 'required_date' THEN dbo.p21_fn_datepart(CONVERT(datetime, audit_trail.new_value, 101))
+						WHEN 'expedite_date' THEN dbo.p21_fn_datepart(CONVERT(datetime, audit_trail.new_value, 101))
+						ELSE audit_trail.new_value 
+				END
+		END as new_value,  
+--         audit_trail.new_value,  
+         audit_trail.uid_value, 
+         audit_trail.auxiliary_value,  
+         audit_trail.date_created,   
+         audit_trail.created_by,   
+         code_p21.code_sub_description as code_sub_description,    
+         inv_mast.item_id 
+    FROM audit_trail  
+INNER JOIN code_p21 on code_p21.code_no = audit_trail.source_area_cd  
+LEFT OUTER JOIN inv_mast on inv_mast.inv_mast_uid = audit_trail.inv_mast_uid 
+WHERE audit_trail.source_area_cd = 1325
+
+-- $Author: Mark.starkman $
+-- $Revision: 3 $
+-- $Date: 3/10/09 9:25a $
+-- $Log: /Server/CommerceCenter/Pillar/Views/p21_view_audit_trail_prod_order_hdr_1325.sql $
+-- 
+-- 3     3/10/09 9:25a Mark.starkman
+-- DEV: EF
+-- DBA: MAS
+-- Defect 1047097: Modify audit trail and views to handle international
+-- dates
+-- Script: apa026635
+-- 
+-- 1     10/06/03 10:27a Bernie_pomidor
+-- DBA: BGP
+-- DEV: MEC
+-- Add audit trail views
+-- ala006894
+GO
+
+
